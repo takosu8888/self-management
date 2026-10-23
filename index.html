@@ -3,182 +3,452 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>東進 勉強・習慣管理アプリ</title>
-    <!-- Tailwind CSS CDN -->
+    <title>東進 習慣管理 App</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 pb-20">
+<body class="bg-slate-100 text-slate-800 pb-24 min-h-screen">
 
     <!-- ヘッダー -->
-    <header class="bg-indigo-600 text-white p-4 shadow-md sticky top-0 z-50">
-        <h1 class="text-xl font-bold text-center">📚 東進 習慣管理</h1>
+    <header class="bg-indigo-600 text-white font-bold text-center py-3 sticky top-0 z-30 shadow-md text-lg flex items-center justify-center gap-2">
+        <i class="fa-solid fa-graduation-cap"></i> 東進 習慣管理 App
     </header>
 
-    <!-- メインコンテンツ領域 -->
-    <main class="max-w-md mx-auto p-4">
+    <!-- メインコンテンツ -->
+    <main class="max-w-md mx-auto p-3 space-y-4">
 
         <!-- 1. ホームタブ -->
-        <section id="tab-home" class="space-y-4 tab-content">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-2">🎯 今週・今月の目標</h2>
-                <div id="goal-display" class="text-sm space-y-2">
-                    <!-- JSで動的に表示 -->
+        <section id="tab-home" class="tab-content active space-y-4">
+            
+            <!-- 今週・今月の目標達成状況 -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye"></i> 今週・今月の進捗
+                    </h2>
+                    <button onclick="switchTab('goal')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-semibold transition">
+                        <i class="fa-solid fa-pen"></i> 目標設定
+                    </button>
                 </div>
-                <button onclick="switchTab('goal')" class="mt-3 w-full bg-indigo-50 text-indigo-600 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition">目標を設定・変更する</button>
+
+                <!-- 今週のコマ数進捗 -->
+                <div class="bg-slate-50 p-3 rounded-lg space-y-1.5 border border-slate-100">
+                    <div class="flex justify-between text-xs font-bold text-slate-700">
+                        <span>今週の受講目標</span>
+                        <span id="weekly-lesson-status">0 / 0コマ</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="weekly-lesson-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 pt-0.5">
+                        <span id="weekly-lesson-percent">達成率: 0%</span>
+                        <span id="weekly-lesson-remaining" class="font-bold text-indigo-600">あと 0 コマ！</span>
+                    </div>
+                </div>
+
+                <!-- 今月のコマ数進捗 -->
+                <div class="bg-slate-50 p-3 rounded-lg space-y-1.5 border border-slate-100">
+                    <div class="flex justify-between text-xs font-bold text-slate-700">
+                        <span>今月の受講目標</span>
+                        <span id="monthly-lesson-status">0 / 0コマ</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="monthly-lesson-bar" class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 pt-0.5">
+                        <span id="monthly-lesson-percent">達成率: 0%</span>
+                        <span id="monthly-lesson-remaining" class="font-bold text-indigo-600">あと 0 コマ！</span>
+                    </div>
+                </div>
+
+                <!-- 今週の遊び時間制限状況 -->
+                <div class="bg-slate-50 p-3 rounded-lg space-y-1.5 border border-slate-100">
+                    <div class="flex justify-between text-xs font-bold text-slate-700">
+                        <span>今週の遊び時間上限</span>
+                        <span id="weekly-play-status">0 / 0分</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="weekly-play-bar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 pt-0.5">
+                        <span id="weekly-play-percent">使用率: 0%</span>
+                        <span id="weekly-play-remaining" class="font-bold text-emerald-600">残り 0分</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-2">📊 全体進捗サマリー</h2>
-                <div class="mb-2 flex justify-between text-sm font-medium">
+            <!-- 全体進捗サマリー -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-2">
+                <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> 全講座 通算完了度
+                </h2>
+                <div class="flex justify-between text-xs font-bold text-slate-700">
                     <span id="total-progress-text">完了数: 0 / 0コマ</span>
-                    <span id="total-progress-percent">0%</span>
+                    <span id="total-progress-percent" class="text-indigo-600">0%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div id="total-progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div id="total-progress-bar" class="bg-gradient-to-r from-indigo-500 to-indigo-700 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-2">🔥 本日のクイック記録</h2>
-                <button onclick="switchTab('review')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow hover:bg-indigo-700 transition">今日の振り返りを入力する</button>
+            <!-- 今週の勉強・遊び時間のグラフ表示 -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column"></i> 直近7日間の時間記録
+                    </h2>
+                    <button onclick="switchTab('analytics')" class="text-xs text-indigo-600 font-semibold hover:underline">
+                        詳細グラフ <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+                <div class="relative h-48 w-full">
+                    <canvas id="homeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- クイックアクション -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm text-center">
+                <h2 class="font-bold text-slate-700 mb-2 text-sm">🔥 本日の活動を記録しましょう</h2>
+                <button onclick="switchTab('review')" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> 今日の勉強・遊び時間を入力
+                </button>
             </div>
         </section>
 
-        <!-- 2. 授業進捗タブ -->
-        <section id="tab-lessons" class="space-y-4 tab-content hidden">
-            <div class="flex justify-between items-center mb-2">
-                <h2 class="text-lg font-bold text-indigo-600">📝 授業達成度チェック</h2>
-                <span id="lesson-count-badge" class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full font-bold"></span>
+        <!-- 2. 授業達成度タブ -->
+        <section id="tab-lessons" class="tab-content space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="font-bold text-indigo-600 flex items-center gap-2 text-base">
+                    <i class="fa-solid fa-book-open"></i> 授業達成度チェック
+                </h2>
+                <span id="lesson-count-badge" class="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-bold">0/0 完了</span>
             </div>
-            <p class="text-xs text-gray-500">受講が終わったらチェックを入れてください。</p>
-            <div id="lesson-list" class="space-y-4">
-                <!-- JSで動的に科目ごとに生成 -->
-            </div>
+            <div id="lesson-list" class="space-y-3"></div>
         </section>
 
-        <!-- 3. 一日の振り返りタブ -->
-        <section id="tab-review" class="space-y-4 tab-content hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-3">✍️ 一日の振り返り入力</h2>
-                <form id="review-form" onsubmit="saveReview(event)" class="space-y-4">
+        <!-- 3. 一日の振り返り入力タブ -->
+        <section id="tab-review" class="tab-content">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-nib"></i> 一日の振り返り入力
+                    </h2>
+                    <span id="form-mode-badge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">新規登録</span>
+                </div>
+                <form id="review-form" onsubmit="saveReview(event)" class="space-y-3">
+                    <input type="hidden" id="editing-id" value="">
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">日付</label>
-                        <input type="date" id="review-date" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">日付</label>
+                        <input type="date" id="review-date" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">東進映像授業の時間 (分)</label>
-                        <input type="number" id="toshin-time" min="0" placeholder="例: 90" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">東進 映像授業時間 (分)</label>
+                        <input type="number" id="toshin-time" min="0" placeholder="例: 90" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">それ以外の勉強時間 (分)</label>
-                        <input type="number" id="other-time" min="0" placeholder="例: 120" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">それ以外の勉強時間 (分)</label>
+                        <input type="number" id="other-time" min="0" placeholder="例: 120" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">遊んだ時間 (分)</label>
-                        <input type="number" id="play-time" min="0" placeholder="例: 60" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">遊んだ時間 (分)</label>
+                        <input type="number" id="play-time" min="0" placeholder="例: 60" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow hover:bg-indigo-700 transition">記録を保存する</button>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">一言メモ・振り返り (任意)</label>
+                        <input type="text" id="review-note" placeholder="例: 英語の単語を100個覚えた！" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div class="pt-2 flex gap-2">
+                        <button type="submit" id="submit-btn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition">
+                            記録を保存する
+                        </button>
+                        <button type="button" id="cancel-edit-btn" onclick="resetReviewForm()" class="hidden py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition">
+                            キャンセル
+                        </button>
+                    </div>
                 </form>
             </div>
         </section>
 
-        <!-- 4. カレンダー＆履歴タブ -->
-        <section id="tab-calendar" class="space-y-4 tab-content hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-3">📅 振り返りカレンダー・履歴</h2>
-                <div id="history-list" class="space-y-3">
-                    <!-- 履歴がここに表示されます -->
+        <!-- 4. グラフ分析タブ -->
+        <section id="tab-analytics" class="tab-content space-y-4">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line"></i> 学習・遊び時間の推移
+                    </h2>
+                    <select id="analytics-period" onchange="renderAnalyticsChart()" class="text-xs bg-slate-100 border border-slate-300 rounded px-2 py-1 font-semibold text-slate-700 focus:outline-none">
+                        <option value="7">直近 7 日間</option>
+                        <option value="14">直近 14 日間</option>
+                        <option value="30">直近 30 日間</option>
+                    </select>
                 </div>
+                <div class="relative h-64 w-full">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 時間割合ドーナツチャート -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <h2 class="font-bold text-indigo-600 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-chart-pie"></i> 今週の時間配分比率
+                </h2>
+                <div class="relative h-48 w-full flex justify-center">
+                    <canvas id="ratioChart"></canvas>
+                </div>
+                <div id="ratio-summary" class="text-center text-xs text-slate-600 pt-2 border-t"></div>
             </div>
         </section>
 
-        <!-- 5. 目標設定タブ -->
-        <section id="tab-goal" class="space-y-4 tab-content hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-bold text-indigo-600 mb-3">🎯 目標設定</h2>
-                <form id="goal-form" onsubmit="saveGoal(event)" class="space-y-4">
+        <!-- 5. 履歴タブ -->
+        <section id="tab-calendar" class="tab-content space-y-3">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-indigo-600 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> 振り返り履歴
+                    </h2>
+                    <span id="history-count" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">0件</span>
+                </div>
+                <div id="history-list" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+        <!-- 6. 目標・設定タブ -->
+        <section id="tab-goal" class="tab-content space-y-4">
+            <!-- 目標設定 -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <h2 class="font-bold text-indigo-600 flex items-center gap-2 border-b pb-2">
+                    <i class="fa-solid fa-sliders"></i> 目標設定
+                </h2>
+                <form id="goal-form" onsubmit="saveGoal(event)" class="space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">今週の目標（映像授業コマ数）</label>
-                        <input type="number" id="goal-weekly-lessons" min="0" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">今週の目標（映像授業コマ数）</label>
+                        <input type="number" id="goal-weekly-lessons" min="0" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">今週の遊び時間上限（分/日 または 週合計）</label>
-                        <input type="number" id="goal-weekly-play" min="0" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">今週の遊び時間上限 (分)</label>
+                        <input type="number" id="goal-weekly-play" min="0" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">今月の目標（映像授業コマ数）</label>
-                        <input type="number" id="goal-monthly-lessons" min="0" class="w-full p-2 border rounded-lg" required>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">今月の目標（映像授業コマ数）</label>
+                        <input type="number" id="goal-monthly-lessons" min="0" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow hover:bg-indigo-700 transition">目標を保存する</button>
+                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition">
+                        目標を保存する
+                    </button>
                 </form>
+            </div>
+
+            <!-- バックアップ & 復元 -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <h2 class="font-bold text-indigo-600 flex items-center gap-2 border-b pb-2">
+                    <i class="fa-solid fa-database"></i> データ管理・バックアップ
+                </h2>
+                <p class="text-xs text-slate-500">データをファイルに書き出したり、別の端末に移行・復元ができます。</p>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="exportJSON()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5 border border-slate-300">
+                        <i class="fa-solid fa-download text-indigo-600"></i> JSON出力
+                    </button>
+                    <button onclick="exportCSV()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5 border border-slate-300">
+                        <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV出力
+                    </button>
+                </div>
+
+                <div class="pt-2 border-t">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">バックアップファイルから復元 (JSON)</label>
+                    <input type="file" id="import-file" accept=".json" onchange="importJSON(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                </div>
+
+                <div class="pt-2 border-t">
+                    <button onclick="clearAllData()" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-lg transition border border-rose-200 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-trash-can"></i> 全データを初期化
+                    </button>
+                </div>
             </div>
         </section>
 
     </main>
 
-    <!-- ボトムナビゲーションバー（スマホ対応） -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-2 z-50 max-w-md mx-auto shadow-lg">
-        <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-indigo-600 text-xs font-bold py-1 px-3">
-            🏠<span class="mt-1">ホーム</span>
+    <!-- メッセージポップアップ / モーダル -->
+    <div id="toast-modal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-5 max-w-xs w-full shadow-2xl text-center space-y-3">
+            <div id="toast-icon" class="text-3xl text-indigo-600"></div>
+            <h3 id="toast-title" class="font-bold text-slate-800 text-base"></h3>
+            <p id="toast-message" class="text-xs text-slate-600"></p>
+            <div id="toast-actions" class="pt-2 flex gap-2">
+                <button id="toast-confirm-btn" class="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ボトムナビゲーション -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-20 max-w-md mx-auto shadow-lg">
+        <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex-1 text-center text-xs font-bold text-indigo-600">
+            <i class="fa-solid fa-house text-lg block mb-0.5"></i>ホーム
         </button>
-        <button onclick="switchTab('lessons')" id="nav-lessons" class="flex flex-col items-center text-gray-400 text-xs py-1 px-3">
-            📖<span class="mt-1">授業</span>
+        <button onclick="switchTab('lessons')" id="nav-lessons" class="nav-btn flex-1 text-center text-xs font-bold text-slate-400">
+            <i class="fa-solid fa-book text-lg block mb-0.5"></i>授業
         </button>
-        <button onclick="switchTab('review')" id="nav-review" class="flex flex-col items-center text-gray-400 text-xs py-1 px-3">
-            ✍️<span class="mt-1">振り返り</span>
+        <button onclick="switchTab('review')" id="nav-review" class="nav-btn flex-1 text-center text-xs font-bold text-slate-400">
+            <i class="fa-solid fa-pen-to-square text-lg block mb-0.5"></i>振り返り
         </button>
-        <button onclick="switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center text-gray-400 text-xs py-1 px-3">
-            📅<span class="mt-1">カレンダー</span>
+        <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn flex-1 text-center text-xs font-bold text-slate-400">
+            <i class="fa-solid fa-chart-column text-lg block mb-0.5"></i>分析
         </button>
-        <button onclick="switchTab('goal')" id="nav-goal" class="flex flex-col items-center text-gray-400 text-xs py-1 px-3">
-            🎯<span class="mt-1">目標</span>
+        <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex-1 text-center text-xs font-bold text-slate-400">
+            <i class="fa-solid fa-list-check text-lg block mb-0.5"></i>履歴
+        </button>
+        <button onclick="switchTab('goal')" id="nav-goal" class="nav-btn flex-1 text-center text-xs font-bold text-slate-400">
+            <i class="fa-solid fa-gear text-lg block mb-0.5"></i>設定
         </button>
     </nav>
 
     <script>
-        // 授業データの定義
+        // 講座マスターデータ
         const courseData = [
-            { category: "数学", name: "数と式", count: 6 }, // 1~5 + 修了
-            { category: "数学", name: "集合と論証", count: 4 }, // 1~3 + 修了
-            { category: "数学", name: "2次関数", count: 6 }, // 1~5 + 修了
-            { category: "数学", name: "図形と計量", count: 6 }, // 1~5 + 修了
-            { category: "数学", name: "場合の数", count: 5 }, // 1~4 + 修了
-            { category: "数学", name: "確率", count: 4 }, // 1~3 + 修了
-            { category: "数学", name: "図形の性質", count: 5 }, // 1~4 + 修了
-            { category: "数学", name: "データの分析", count: 4 }, // 1~3 + 修了
-            { category: "数学", name: "数学と人間の活動", count: 5 }, // 1~4 + 修了
-            { category: "英語", name: "レベルアップ英語 (1~10)", count: 10 },
-            { category: "英語", name: "中間テスト", count: 1 },
-            { category: "英語", name: "レベルアップ英語 (11~20)", count: 10 }
+            { name: "数と式", count: 6 },
+            { name: "集合と論証", count: 4 },
+            { name: "2次関数", count: 6 },
+            { name: "図形と計量", count: 6 },
+            { name: "場合の数", count: 5 },
+            { name: "確率", count: 4 },
+            { name: "図形の性質", count: 5 },
+            { name: "データの分析", count: 4 },
+            { name: "数学と人間の活動", count: 5 },
+            { name: "レベルアップ英語 (1~10)", count: 10 },
+            { name: "中間テスト", count: 1 },
+            { name: "レベルアップ英語 (11~20)", count: 10 }
         ];
 
-        // アプリの状態初期化
-        let checkedLessons = JSON.parse(localStorage.getItem('toshin_checkedLessons')) || {};
-        let reviews = JSON.parse(localStorage.getItem('toshin_reviews')) || [];
-        let goals = JSON.parse(localStorage.getItem('toshin_goals')) || { weeklyLessons: 5, weeklyPlay: 300, monthlyLessons: 20 };
+        // アプリの状態
+        let checkedLessons = JSON.parse(localStorage.getItem('toshin_checkedLessons_v2')) || {}; // { "cIndex_i": "YYYY-MM-DD" }
+        let reviews = JSON.parse(localStorage.getItem('toshin_reviews_v2')) || [];
+        let goals = JSON.parse(localStorage.getItem('toshin_goals_v2')) || { weeklyLessons: 5, weeklyPlay: 300, monthlyLessons: 20 };
 
-        // タブ切り替え関数
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        // チャートインスタンス
+        let homeChartInstance = null;
+        let analyticsChartInstance = null;
+        let ratioChartInstance = null;
 
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('text-indigo-600', 'font-bold');
-                btn.classList.add('text-gray-400');
-            });
-            const activeBtn = document.getElementById('nav-' + tabId);
-            activeBtn.classList.remove('text-gray-400');
-            activeBtn.classList.add('text-indigo-600', 'font-bold');
+        // 初期化処理
+        window.addEventListener('DOMContentLoaded', () => {
+            // 後方互換：旧形式データのマイグレーションチェック
+            migrateOldData();
 
-            window.scrollTo(0, 0);
-            if(tabId === 'calendar') renderHistory();
-            if(tabId === 'home') updateHome();
+            document.getElementById('review-date').valueAsDate = new Date();
+            document.getElementById('goal-weekly-lessons').value = goals.weeklyLessons;
+            document.getElementById('goal-weekly-play').value = goals.weeklyPlay;
+            document.getElementById('goal-monthly-lessons').value = goals.monthlyLessons;
+
+            renderLessons();
+            updateHome();
+        });
+
+        // 旧データ互換マイグレーション
+        function migrateOldData() {
+            const oldChecked = JSON.parse(localStorage.getItem('toshin_checkedLessons'));
+            if (oldChecked && Object.keys(checkedLessons).length === 0) {
+                const todayStr = getFormattedDate(new Date());
+                Object.keys(oldChecked).forEach(k => {
+                    if (oldChecked[k] === true) {
+                        checkedLessons[k] = todayStr;
+                    }
+                });
+                localStorage.setItem('toshin_checkedLessons_v2', JSON.stringify(checkedLessons));
+            }
+
+            const oldReviews = JSON.parse(localStorage.getItem('toshin_reviews'));
+            if (oldReviews && reviews.length === 0) {
+                reviews = oldReviews.map(r => ({
+                    id: Date.now() + Math.random().toString(),
+                    date: r.date,
+                    toshin: r.toshin,
+                    other: r.other,
+                    play: r.play,
+                    note: ""
+                }));
+                localStorage.setItem('toshin_reviews_v2', JSON.stringify(reviews));
+            }
         }
 
-        // 授業リストの描画
+        // フォーマット日付取得 (YYYY-MM-DD)
+        function getFormattedDate(d) {
+            const date = new Date(d);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // タブ切り替え
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-600');
+                btn.classList.add('text-slate-400');
+            });
+            const activeNav = document.getElementById('nav-' + tabId);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('text-indigo-600');
+            }
+
+            window.scrollTo(0, 0);
+
+            if (tabId === 'calendar') renderHistory();
+            if (tabId === 'home') updateHome();
+            if (tabId === 'analytics') renderAnalyticsChart();
+        }
+
+        // 月曜日始まりの今週の範囲を取得
+        function getThisWeekRange() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0(日) - 6(土)
+            const distanceToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+            
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + distanceToMonday);
+            monday.setHours(0, 0, 0, 0);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
+
+            return { monday, sunday };
+        }
+
+        // 今月（カレンダー月）の範囲を取得
+        function getThisMonthRange() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            return { start, end };
+        }
+
+        // 日付文字列が範囲内にあるか判定
+        function isDateInRange(dateStr, startStr, endStr) {
+            return dateStr >= startStr && dateStr <= endStr;
+        }
+
+        // 授業一覧の描写
         function renderLessons() {
             const container = document.getElementById('lesson-list');
             container.innerHTML = '';
@@ -186,120 +456,416 @@
             let completedLessons = 0;
 
             courseData.forEach((course, cIndex) => {
-                let courseCard = document.createElement('div');
-                courseCard.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-100';
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm';
                 
-                let html = `<h3 class="font-bold text-gray-700 mb-2">${course.name} <span class="text-xs font-normal text-gray-400">(${course.count}コマ)</span></h3><div class="grid grid-cols-5 gap-2">`;
-                
+                let html = `<div class="font-bold text-slate-800 text-xs mb-2 flex justify-between items-center">
+                    <span>${course.name}</span>
+                    <span class="text-slate-400 text-[11px] font-normal">${course.count}コマ</span>
+                </div><div class="grid grid-cols-5 gap-1.5">`;
+
                 for (let i = 1; i <= course.count; i++) {
                     totalLessons++;
                     const key = `${cIndex}_${i}`;
-                    const isChecked = checkedLessons[key] ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-gray-50 text-gray-600 border-gray-200';
-                    const label = (course.name.includes("修了") || (course.name.includes("中間テスト") && i === 1) || (i === course.count && course.name.includes("修了"))) ? `修了` : `${i}`;
-                    
-                    // 特殊な名前調整（例：修了コマなどのわかりやすさ）
-                    let displayName = i;
-                    if (course.count > 1 && i === course.count && course.name.includes("レベルアップ") === false && course.name !== "中間テスト") {
-                        displayName = "修了";
-                    }
+                    const isChecked = Boolean(checkedLessons[key]);
+                    let label = i;
+                    if (course.count > 1 && i === course.count && !course.name.includes("レベルアップ")) label = "修了";
+                    if (isChecked) completedLessons++;
 
-                    if(checkedLessons[key]) completedLessons++;
+                    const activeClass = isChecked 
+                        ? 'bg-indigo-600 text-white font-bold shadow-sm' 
+                        : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100';
 
-                    html += `<button onclick="toggleLesson(${cIndex}, ${i})" class="py-2 text-xs font-medium rounded-lg border ${isChecked} transition flex flex-col items-center justify-center">
-                        <span>${displayName === "修了" ? "修了" : i}</span>
-                    </button>`;
+                    html += `<button onclick="toggleLesson(${cIndex}, ${i})" class="py-2 rounded-lg text-xs font-semibold transition ${activeClass}">${label}</button>`;
                 }
                 html += `</div>`;
-                courseCard.innerHTML = html;
-                container.appendChild(courseCard);
+                card.innerHTML = html;
+                container.appendChild(card);
             });
 
-            // 全体進捗更新
             const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
             document.getElementById('total-progress-text').innerText = `完了数: ${completedLessons} / ${totalLessons}コマ`;
             document.getElementById('total-progress-percent').innerText = `${percent}%`;
             document.getElementById('total-progress-bar').style.width = `${percent}%`;
             document.getElementById('lesson-count-badge').innerText = `${completedLessons}/${totalLessons} 完了`;
-            
+        }
+
+        // 授業チェック切り替え
+        function toggleLesson(cIndex, i) {
+            const key = `${cIndex}_${i}`;
+            if (checkedLessons[key]) {
+                delete checkedLessons[key];
+            } else {
+                checkedLessons[key] = getFormattedDate(new Date());
+            }
+            localStorage.setItem('toshin_checkedLessons_v2', JSON.stringify(checkedLessons));
+            renderLessons();
             updateHome();
         }
 
-        // 授業のチェック状態切替
-        function toggleLesson(cIndex, i) {
-            const key = `${cIndex}_${i}`;
-            checkedLessons[key] = !checkedLessons[key];
-            localStorage.setItem('toshin_checkedLessons', JSON.stringify(checkedLessons));
-            renderLessons();
-        }
-
-        // ホーム画面の更新
+        // ホーム画面の進捗・サマリー更新
         function updateHome() {
-            const goalDiv = document.getElementById('goal-display');
-            goalDiv.innerHTML = `
-                <div class="flex justify-between py-1 border-b"><span>今週の授業目標:</span><span class="font-bold text-indigo-600">${goals.weeklyLessons} コマ</span></div>
-                <div class="flex justify-between py-1 border-b"><span>今週の遊び上限:</span><span class="font-bold text-indigo-600">${goals.weeklyPlay} 分</span></div>
-                <div class="flex justify-between py-1"><span>今月の授業目標:</span><span class="font-bold text-indigo-600">${goals.monthlyLessons} コマ</span></div>
-            `;
+            const { monday, sunday } = getThisWeekRange();
+            const { start: monthStart, end: monthEnd } = getThisMonthRange();
+
+            const mondayStr = getFormattedDate(monday);
+            const sundayStr = getFormattedDate(sunday);
+            const monthStartStr = getFormattedDate(monthStart);
+            const monthEndStr = getFormattedDate(monthEnd);
+
+            // 1. 今週 & 今月の達成コマ数集計
+            let weeklyCheckedCount = 0;
+            let monthlyCheckedCount = 0;
+
+            Object.values(checkedLessons).forEach(dateStr => {
+                if (isDateInRange(dateStr, mondayStr, sundayStr)) weeklyCheckedCount++;
+                if (isDateInRange(dateStr, monthStartStr, monthEndStr)) monthlyCheckedCount++;
+            });
+
+            // 今週のコマ目標反映
+            const wGoal = goals.weeklyLessons || 1;
+            const wPercent = Math.min(100, Math.round((weeklyCheckedCount / wGoal) * 100));
+            const wRemaining = Math.max(0, wGoal - weeklyCheckedCount);
+
+            document.getElementById('weekly-lesson-status').innerText = `${weeklyCheckedCount} / ${wGoal}コマ`;
+            document.getElementById('weekly-lesson-bar').style.width = `${wPercent}%`;
+            document.getElementById('weekly-lesson-percent').innerText = `達成率: ${wPercent}%`;
+            document.getElementById('weekly-lesson-remaining').innerText = wRemaining === 0 ? '🎉 目標達成！' : `あと ${wRemaining} コマ！`;
+
+            // 今月のコマ目標反映
+            const mGoal = goals.monthlyLessons || 1;
+            const mPercent = Math.min(100, Math.round((monthlyCheckedCount / mGoal) * 100));
+            const mRemaining = Math.max(0, mGoal - monthlyCheckedCount);
+
+            document.getElementById('monthly-lesson-status').innerText = `${monthlyCheckedCount} / ${mGoal}コマ`;
+            document.getElementById('monthly-lesson-bar').style.width = `${mPercent}%`;
+            document.getElementById('monthly-lesson-percent').innerText = `達成率: ${mPercent}%`;
+            document.getElementById('monthly-lesson-remaining').innerText = mRemaining === 0 ? '🎉 目標達成！' : `あと ${mRemaining} コマ！`;
+
+            // 2. 今週の遊び時間集計
+            let weeklyPlayMinutes = 0;
+            reviews.forEach(r => {
+                if (isDateInRange(r.date, mondayStr, sundayStr)) {
+                    weeklyPlayMinutes += (parseInt(r.play) || 0);
+                }
+            });
+
+            const pGoal = goals.weeklyPlay || 1;
+            const pPercent = Math.min(100, Math.round((weeklyPlayMinutes / pGoal) * 100));
+            const pRemaining = pGoal - weeklyPlayMinutes;
+
+            document.getElementById('weekly-play-status').innerText = `${weeklyPlayMinutes} / ${pGoal}分`;
+            document.getElementById('weekly-play-bar').style.width = `${pPercent}%`;
+            document.getElementById('weekly-play-percent').innerText = `使用率: ${pPercent}%`;
+
+            const playRemainingEl = document.getElementById('weekly-play-remaining');
+            const playBarEl = document.getElementById('weekly-play-bar');
+
+            if (pRemaining < 0) {
+                playRemainingEl.innerText = `上限を ${Math.abs(pRemaining)}分 超過！`;
+                playRemainingEl.className = "font-bold text-rose-600";
+                playBarEl.className = "bg-rose-500 h-2.5 rounded-full transition-all duration-500";
+            } else {
+                playRemainingEl.innerText = `残り ${pRemaining}分`;
+                playRemainingEl.className = "font-bold text-emerald-600";
+                playBarEl.className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
+            }
+
+            // 直近7日間のホームミニグラフ描写
+            renderHomeChart();
         }
 
-        // 振り返りの保存
+        // ホーム画面の直近7日間バーチャート
+        function renderHomeChart() {
+            const ctx = document.getElementById('homeChart').getContext('2d');
+            
+            // 直近7日間の日付配列作成
+            const labels = [];
+            const dates = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                dates.push(getFormattedDate(d));
+                labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+            }
+
+            const studyData = dates.map(dStr => {
+                const found = reviews.find(r => r.date === dStr);
+                return found ? (parseInt(found.toshin) + parseInt(found.other)) : 0;
+            });
+
+            const playData = dates.map(dStr => {
+                const found = reviews.find(r => r.date === dStr);
+                return found ? parseInt(found.play) : 0;
+            });
+
+            if (homeChartInstance) homeChartInstance.destroy();
+
+            homeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '勉強 (分)',
+                            data: studyData,
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 4
+                        },
+                        {
+                            label: '遊び (分)',
+                            data: playData,
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // 分析タブのグラフ描写
+        function renderAnalyticsChart() {
+            const period = parseInt(document.getElementById('analytics-period').value) || 7;
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+
+            const labels = [];
+            const dates = [];
+            for (let i = period - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                dates.push(getFormattedDate(d));
+                labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+            }
+
+            const toshinData = dates.map(dStr => {
+                const found = reviews.find(r => r.date === dStr);
+                return found ? parseInt(found.toshin) : 0;
+            });
+            const otherData = dates.map(dStr => {
+                const found = reviews.find(r => r.date === dStr);
+                return found ? parseInt(found.other) : 0;
+            });
+            const playData = dates.map(dStr => {
+                const found = reviews.find(r => r.date === dStr);
+                return found ? parseInt(found.play) : 0;
+            });
+
+            if (analyticsChartInstance) analyticsChartInstance.destroy();
+
+            analyticsChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '東進授業',
+                            data: toshinData,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'その他勉強',
+                            data: otherData,
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '遊び',
+                            data: playData,
+                            borderColor: '#f43f5e',
+                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // ドーナツチャート（今週の比率）
+            renderRatioChart();
+        }
+
+        // 今週の時間比率ドーナツチャート
+        function renderRatioChart() {
+            const ctx = document.getElementById('ratioChart').getContext('2d');
+            const { monday, sunday } = getThisWeekRange();
+            const mondayStr = getFormattedDate(monday);
+            const sundayStr = getFormattedDate(sunday);
+
+            let totalToshin = 0;
+            let totalOther = 0;
+            let totalPlay = 0;
+
+            reviews.forEach(r => {
+                if (isDateInRange(r.date, mondayStr, sundayStr)) {
+                    totalToshin += (parseInt(r.toshin) || 0);
+                    totalOther += (parseInt(r.other) || 0);
+                    totalPlay += (parseInt(r.play) || 0);
+                }
+            });
+
+            const totalStudy = totalToshin + totalOther;
+            const totalAll = totalStudy + totalPlay;
+
+            document.getElementById('ratio-summary').innerHTML = totalAll === 0 
+                ? '今週の記録はまだありません。' 
+                : `今週の総学習時間: <b class="text-indigo-600">${Math.round(totalStudy/60*10)/10}時間</b> / 総遊び時間: <b class="text-rose-500">${Math.round(totalPlay/60*10)/10}時間</b>`;
+
+            if (ratioChartInstance) ratioChartInstance.destroy();
+
+            ratioChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['東進授業', 'その他勉強', '遊び'],
+                    datasets: [{
+                        data: [totalToshin, totalOther, totalPlay],
+                        backgroundColor: ['#4f46e5', '#06b6d4', '#f43f5e'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        // 振り返りの保存（新規・編集）
         function saveReview(e) {
             e.preventDefault();
+            const editingId = document.getElementById('editing-id').value;
             const date = document.getElementById('review-date').value;
             const toshin = parseInt(document.getElementById('toshin-time').value) || 0;
             const other = parseInt(document.getElementById('other-time').value) || 0;
             const play = parseInt(document.getElementById('play-time').value) || 0;
+            const note = document.getElementById('review-note').value.trim();
 
-            const newReview = { date, toshin, other, play };
-            
-            // 同じ日付があれば上書き、なければ追加
-            const existingIndex = reviews.findIndex(r => r.date === date);
-            if (existingIndex >= 0) {
-                reviews[existingIndex] = newReview;
+            if (editingId) {
+                // 編集モード
+                const index = reviews.findIndex(r => r.id === editingId);
+                if (index !== -1) {
+                    reviews[index] = { id: editingId, date, toshin, other, play, note };
+                }
+                showModal('更新完了', '振り返り記録を更新しました。', 'fa-check-circle text-emerald-500');
             } else {
-                reviews.unshift(newReview);
+                // 新規モード（同じ日付があれば上書き、無ければ新規追加）
+                const existingIndex = reviews.findIndex(r => r.date === date);
+                if (existingIndex !== -1) {
+                    reviews[existingIndex] = { id: reviews[existingIndex].id, date, toshin, other, play, note };
+                } else {
+                    reviews.unshift({ id: Date.now().toString(), date, toshin, other, play, note });
+                }
+                showModal('保存完了', '今日の振り返りを保存しました！', 'fa-circle-check text-indigo-600');
             }
 
-            localStorage.setItem('toshin_reviews', JSON.stringify(reviews));
-            alert('本日の振り返りを保存しました！お疲れ様です！');
+            // 日付順にソート (新しい順)
+            reviews.sort((a, b) => b.date.localeCompare(a.date));
+
+            localStorage.setItem('toshin_reviews_v2', JSON.stringify(reviews));
+            resetReviewForm();
+            updateHome();
+        }
+
+        // 振り返りフォームのリセット
+        function resetReviewForm() {
+            document.getElementById('editing-id').value = '';
             document.getElementById('review-form').reset();
             document.getElementById('review-date').valueAsDate = new Date();
+            document.getElementById('form-mode-badge').innerText = '新規登録';
+            document.getElementById('form-mode-badge').className = 'text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold';
+            document.getElementById('submit-btn').innerText = '記録を保存する';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
         }
 
-        // 目標の保存
-        function saveGoal(e) {
-            e.preventDefault();
-            goals = {
-                weeklyLessons: parseInt(document.getElementById('goal-weekly-lessons').value) || 0,
-                weeklyPlay: parseInt(document.getElementById('goal-weekly-play').value) || 0,
-                monthlyLessons: parseInt(document.getElementById('goal-monthly-lessons').value) || 0
-            };
-            localStorage.setItem('toshin_goals', JSON.stringify(goals));
-            alert('目標を更新しました！');
-            switchTab('home');
+        // 振り返り記録の編集ロード
+        function editReview(id) {
+            const item = reviews.find(r => r.id === id);
+            if (!item) return;
+
+            document.getElementById('editing-id').value = item.id;
+            document.getElementById('review-date').value = item.date;
+            document.getElementById('toshin-time').value = item.toshin;
+            document.getElementById('other-time').value = item.other;
+            document.getElementById('play-time').value = item.play;
+            document.getElementById('review-note').value = item.note || '';
+
+            document.getElementById('form-mode-badge').innerText = '編集モード';
+            document.getElementById('form-mode-badge').className = 'text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold';
+            document.getElementById('submit-btn').innerText = '変更を更新する';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            switchTab('review');
         }
 
-        // 履歴・カレンダーの描画
+        // 振り返り記録の削除
+        function deleteReview(id) {
+            showConfirmModal('記録の削除', 'この記録を削除してもよろしいですか？', () => {
+                reviews = reviews.filter(r => r.id !== id);
+                localStorage.setItem('toshin_reviews_v2', JSON.stringify(reviews));
+                renderHistory();
+                updateHome();
+            });
+        }
+
+        // 履歴一覧の描写
         function renderHistory() {
             const container = document.getElementById('history-list');
+            document.getElementById('history-count').innerText = `${reviews.length}件`;
+
             if (reviews.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">まだ記録がありません。「振り返り」タブから入力してください。</p>';
+                container.innerHTML = '<p class="text-center text-slate-400 text-xs py-8">まだ記録がありません</p>';
                 return;
             }
 
             let html = '';
             reviews.forEach(r => {
-                const totalStudy = r.toshin + r.other;
+                const totalStudy = parseInt(r.toshin) + parseInt(r.other);
                 html += `
-                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 text-sm space-y-1">
-                        <div class="flex justify-between font-bold text-indigo-600">
-                            <span>📅 ${r.date}</span>
-                            <span>勉強計: ${totalStudy}分</span>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1.5 hover:border-indigo-200 transition">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-800 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar-check text-indigo-600"></i> ${r.date}
+                            </span>
+                            <span class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                勉強: ${totalStudy}分
+                            </span>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 text-xs text-gray-600 pt-1">
-                            <div>東進: <span class="font-semibold text-gray-800">${r.toshin}分</span></div>
-                            <div>その他: <span class="font-semibold text-gray-800">${r.other}分</span></div>
-                            <div>遊び: <span class="font-semibold text-gray-800">${r.play}分</span></div>
+                        <div class="flex justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                            <span>東進: <b>${r.toshin}分</b></span>
+                            <span>その他: <b>${r.other}分</b></span>
+                            <span>遊び: <b class="text-rose-500">${r.play}分</b></span>
+                        </div>
+                        ${r.note ? `<div class="text-xs text-slate-600 italic bg-white p-2 rounded border border-slate-100 mt-1"><i class="fa-regular fa-comment text-slate-400 mr-1"></i>${r.note}</div>` : ''}
+                        <div class="flex justify-end gap-3 pt-1 text-xs">
+                            <button onclick="editReview('${r.id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> 編集
+                            </button>
+                            <button onclick="deleteReview('${r.id}')" class="text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> 削除
+                            </button>
                         </div>
                     </div>
                 `;
@@ -307,14 +873,146 @@
             container.innerHTML = html;
         }
 
-        // 初期設定
-        document.getElementById('review-date').valueAsDate = new Date();
-        document.getElementById('goal-weekly-lessons').value = goals.weeklyLessons;
-        document.getElementById('goal-weekly-play').value = goals.weeklyPlay;
-        document.getElementById('goal-monthly-lessons').value = goals.monthlyLessons;
+        // 目標保存
+        function saveGoal(e) {
+            e.preventDefault();
+            goals = {
+                weeklyLessons: parseInt(document.getElementById('goal-weekly-lessons').value) || 0,
+                weeklyPlay: parseInt(document.getElementById('goal-weekly-play').value) || 0,
+                monthlyLessons: parseInt(document.getElementById('goal-monthly-lessons').value) || 0
+            };
+            localStorage.setItem('toshin_goals_v2', JSON.stringify(goals));
+            showModal('目標保存', '目標設定を更新しました！', 'fa-circle-check text-indigo-600');
+            updateHome();
+            switchTab('home');
+        }
 
-        renderLessons();
-        updateHome();
+        // JSONエクスポート
+        function exportJSON() {
+            const data = {
+                version: "2.0",
+                exportDate: new Date().toISOString(),
+                checkedLessons,
+                reviews,
+                goals
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `toshin_habit_backup_${getFormattedDate(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // CSVエクスポート
+        function exportCSV() {
+            let csvContent = "\uFEFF日付,東進時間(分),その他勉強(分),合計勉強(分),遊び時間(分),メモ\n";
+            reviews.forEach(r => {
+                const total = parseInt(r.toshin) + parseInt(r.other);
+                const safeNote = `"${(r.note || '').replace(/"/g, '""')}"`;
+                csvContent += `${r.date},${r.toshin},${r.other},${total},${r.play},${safeNote}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `toshin_study_log_${getFormattedDate(new Date())}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // JSONインポート
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.checkedLessons && data.reviews && data.goals) {
+                        showConfirmModal('復元の確認', '既存のデータが上書きされます。インポートを続行しますか？', () => {
+                            checkedLessons = data.checkedLessons;
+                            reviews = data.reviews;
+                            goals = data.goals;
+
+                            localStorage.setItem('toshin_checkedLessons_v2', JSON.stringify(checkedLessons));
+                            localStorage.setItem('toshin_reviews_v2', JSON.stringify(reviews));
+                            localStorage.setItem('toshin_goals_v2', JSON.stringify(goals));
+
+                            renderLessons();
+                            updateHome();
+                            showModal('復元完了', 'データを正常に復元しました。', 'fa-circle-check text-emerald-500');
+                        });
+                    } else {
+                        showModal('エラー', '無効なバックアップファイル形式です。', 'fa-triangle-exclamation text-rose-500');
+                    }
+                } catch (err) {
+                    showModal('エラー', 'ファイルの読み込みに失敗しました。', 'fa-triangle-exclamation text-rose-500');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 全データ初期化
+        function clearAllData() {
+            showConfirmModal('データの初期化', 'すべての受講記録・振り返り・目標設定が消去されます。本当に初期化しますか？', () => {
+                localStorage.removeItem('toshin_checkedLessons_v2');
+                localStorage.removeItem('toshin_reviews_v2');
+                localStorage.removeItem('toshin_goals_v2');
+
+                checkedLessons = {};
+                reviews = [];
+                goals = { weeklyLessons: 5, weeklyPlay: 300, monthlyLessons: 20 };
+
+                renderLessons();
+                updateHome();
+                showModal('初期化完了', 'すべてのデータを消去しました。', 'fa-circle-check text-slate-500');
+            });
+        }
+
+        // 通知モーダル表示
+        function showModal(title, message, iconClass) {
+            const modal = document.getElementById('toast-modal');
+            document.getElementById('toast-icon').className = `text-3xl ${iconClass || 'text-indigo-600'}`;
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+
+            const actions = document.getElementById('toast-actions');
+            actions.innerHTML = `
+                <button onclick="closeModal()" class="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition">OK</button>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // 確認モーダル表示
+        function showConfirmModal(title, message, onConfirm) {
+            const modal = document.getElementById('toast-modal');
+            document.getElementById('toast-icon').className = 'text-3xl fa-solid fa-triangle-exclamation text-amber-500';
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+
+            const actions = document.getElementById('toast-actions');
+            actions.innerHTML = `
+                <button id="modal-cancel-btn" class="flex-1 py-2 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-300 transition">キャンセル</button>
+                <button id="modal-ok-btn" class="flex-1 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition">実行</button>
+            `;
+
+            document.getElementById('modal-cancel-btn').onclick = closeModal;
+            document.getElementById('modal-ok-btn').onclick = () => {
+                closeModal();
+                onConfirm();
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('toast-modal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>
